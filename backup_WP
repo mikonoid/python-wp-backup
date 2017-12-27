@@ -1,0 +1,42 @@
+#!/usr/bin/python
+import tarfile
+import os
+import datetime
+import sys
+from subprocess import call
+import time
+
+DATE = datetime.datetime.now().strftime('%Y-%m-%d')
+
+#filename for tar archive www
+output_filename = "/backup/www-"+DATE+".tar.gz"
+#directory with site
+source_dir = "/var/www"
+#path for backup
+bak_dir = "/backup/"
+
+#create tar archive www-site
+
+def make_tarfile(output_filename, source_dir):
+    tar = tarfile.open(output_filename, "w:gz")
+    tar.add(source_dir, arcname = os.path.basename(source_dir));
+    tar.close()
+
+make_tarfile (output_filename, source_dir)
+
+#create mysql dump
+os.system("mysqldump --add-drop-table -c -u root -ppaswword wordpress > "+bak_dir+"database.bak.sql-"+DATE)
+
+#delete old files
+now = time.time()
+cutoff = now - (7 * 86400)
+
+files = os.listdir(bak_dir)
+for xfile in files:
+        if os.path.isfile( bak_dir + xfile ):
+                t = os.stat( bak_dir + xfile )
+                c = t.st_ctime
+
+                # delete file if older than a week
+                if c < cutoff:
+                        os.remove(bak_dir + xfile)
